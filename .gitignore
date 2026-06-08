@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.env
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data (large files — add your own copy)
+data/*.csv
+
+# Model artifacts
+outputs/*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
