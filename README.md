@@ -2,7 +2,7 @@
 
 ![Dashboard](assets/dashboard.png)
 
-Welcome to this complete machine learning pipeline! It's built on a real-world style Flipkart product dataset (which has roughly 80,000 rows and 25 features). Think of this project as an end-to-end data science journey - going from initial exploratory analysis and feature engineering, all the way to model training, catching data leaks, and evaluating the results.
+A complete ML pipeline built on a Flipkart product dataset (~80,000 rows, 25 features) - covering EDA, feature engineering, leakage detection, model training, and evaluation end to end.
 
 ---
 
@@ -97,10 +97,7 @@ cd flipkart-price-prediction
 # 2. Install what you need
 pip install -r requirements.txt
 
-# 3. Add the dataset
-# Just drop flipkart_products.csv into the data/ folder
-
-# 4. Let it rip!
+# 3. Let it rip!
 python src/pipeline.py
 ```
 
