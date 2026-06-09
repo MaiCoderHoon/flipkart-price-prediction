@@ -19,13 +19,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 
 
-# ── Config ────────────────────────────────────────────────────────────────────
 DATA_PATH  = "data/flipkard.csv"
 OUTPUT_DIR = "outputs/"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-# ── 1. Load ───────────────────────────────────────────────────────────────────
 def load_data(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
     print(f"[load]  {df.shape[0]:,} rows × {df.shape[1]} columns")
@@ -33,7 +31,6 @@ def load_data(path: str) -> pd.DataFrame:
     return df
 
 
-# ── 2. Feature Engineering ────────────────────────────────────────────────────
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["listing_date"]        = pd.to_datetime(df["listing_date"])
@@ -49,19 +46,18 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── 3. Leakage Check ──────────────────────────────────────────────────────────
 def check_leakage(df: pd.DataFrame) -> None:
     """
-    final_price = price * (1 - discount_percent / 100)
-    Including `price` or `discount_amount` as features would be data leakage
-    because the target is deterministically derivable from them.
+    Just a quick check! Since final_price is calculated directly from price and discount_percent 
+    (final_price = price * (1 - discount_percent / 100)), we need to make sure we don't accidentally 
+    include 'price' or 'discount_amount' as features. If we did, it would be a classic case of data leakage, 
+    giving our model the answers upfront!
     """
     calc = df["price"] * (1 - df["discount_percent"] / 100)
     leakage = np.allclose(calc, df["final_price"], atol=1)
     print(f"[leak]  Leakage detected via price+discount: {leakage} → excluded from features")
 
 
-# ── 4. Prepare X / y ─────────────────────────────────────────────────────────
 NUM_FEATURES = [
     "discount_percent", "rating", "review_count", "stock_available",
     "units_sold", "delivery_days", "weight_g", "warranty_months",
@@ -81,7 +77,6 @@ def prepare_splits(df: pd.DataFrame):
     return Xtr, Xte, ytr, yte
 
 
-# ── 5. Preprocessor ───────────────────────────────────────────────────────────
 def build_preprocessor() -> ColumnTransformer:
     return ColumnTransformer([
         ("num", StandardScaler(), NUM_FEATURES),
@@ -89,7 +84,6 @@ def build_preprocessor() -> ColumnTransformer:
     ])
 
 
-# ── 6 & 7. Train + Evaluate ───────────────────────────────────────────────────
 def train_and_evaluate(Xtr, Xte, ytr, yte) -> dict:
     prep = build_preprocessor()
     models = {
@@ -114,7 +108,6 @@ def train_and_evaluate(Xtr, Xte, ytr, yte) -> dict:
     return results, best
 
 
-# ── 8. Dashboard ──────────────────────────────────────────────────────────────
 def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     BLUE, ACCENT, MID = "#0f3460", "#e94560", "#2a6fa8"
     LIGHT, GOLD, GREEN = "#f7f9fc", "#f5a623", "#27ae60"
@@ -122,7 +115,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     fig = plt.figure(figsize=(20, 16))
     fig.patch.set_facecolor("white")
 
-    # 1 — Listings per year
+    # 1 - Listings per year
     ax1 = fig.add_subplot(3, 3, 1)
     yr = df.groupby("year").size()
     colors = [BLUE] * (len(yr) - 1) + [ACCENT]
@@ -131,7 +124,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     ax1.set_ylabel("No. of Products"); ax1.set_facecolor(LIGHT)
     ax1.grid(axis="y", alpha=0.3, zorder=0)
 
-    # 2 — Revenue by category
+    # 2 - Revenue by category
     ax2 = fig.add_subplot(3, 3, 2)
     cat_rev = df.groupby("category")["revenue"].sum().sort_values()
     ax2.barh(cat_rev.index, cat_rev.values / 1e9,
@@ -140,7 +133,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     ax2.set_title("Total Revenue by Category (₹B)", fontweight="bold", color=BLUE, fontsize=11)
     ax2.set_facecolor(LIGHT)
 
-    # 3 — Discount distribution
+    # 3 - Discount distribution
     ax3 = fig.add_subplot(3, 3, 3)
     ax3.hist(df["discount_percent"], bins=40, color=BLUE, edgecolor="white", alpha=0.85, zorder=3)
     ax3.axvline(df["discount_percent"].mean(), color=ACCENT, lw=2, ls="--",
@@ -148,7 +141,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     ax3.set_title("Discount % Distribution", fontweight="bold", color=BLUE, fontsize=11)
     ax3.legend(fontsize=9); ax3.set_facecolor(LIGHT)
 
-    # 4 — Rating bands
+    # 4 - Rating bands
     ax4 = fig.add_subplot(3, 3, 4)
     labels4 = ["1–2", "2–3", "3–4", "4–5"]
     df["rating_bin"] = pd.cut(df["rating"], bins=[1,2,3,4,5], labels=labels4)
@@ -157,7 +150,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     ax4.set_title("Rating Distribution", fontweight="bold", color=BLUE, fontsize=11)
     ax4.set_facecolor(LIGHT); ax4.grid(axis="y", alpha=0.3, zorder=0)
 
-    # 5 — Top 10 sellers
+    # 5 - Top 10 sellers
     ax5 = fig.add_subplot(3, 3, 5)
     ts = df.groupby("seller")["revenue"].sum().sort_values(ascending=True).tail(10)
     ax5.barh(ts.index, ts.values / 1e9,
@@ -165,7 +158,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     ax5.set_title("Top 10 Sellers by Revenue", fontweight="bold", color=BLUE, fontsize=11)
     ax5.set_facecolor(LIGHT)
 
-    # 6 — Price vs units sold
+    # 6 - Price vs units sold
     ax6 = fig.add_subplot(3, 3, 6)
     palette = {"Electronics": BLUE, "Fashion": ACCENT, "Mobiles": MID,
                "Beauty": GOLD, "Toys": GREEN, "Sports": "#9b59b6",
@@ -177,7 +170,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     ax6.set_title("Price vs Units Sold by Category", fontweight="bold", color=BLUE, fontsize=11)
     ax6.legend(fontsize=7, markerscale=2, ncol=2); ax6.set_facecolor(LIGHT)
 
-    # 7 — Seller rating by city
+    # 7 - Seller rating by city
     ax7 = fig.add_subplot(3, 3, 7)
     cr = df.groupby("seller_city")["seller_rating"].mean().sort_values(ascending=False).head(8)
     ax7.bar(cr.index, cr.values, color=MID, edgecolor="white", zorder=3)
@@ -186,7 +179,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     ax7.tick_params(axis="x", rotation=35, labelsize=8)
     ax7.set_facecolor(LIGHT); ax7.grid(axis="y", alpha=0.3, zorder=0)
 
-    # 8 — Actual vs Predicted
+    # 8 - Actual vs Predicted
     ax8 = fig.add_subplot(3, 3, 8)
     idx = np.random.choice(len(yte), 500, replace=False)
     preds = results[best]["preds"]
@@ -197,7 +190,7 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
                   fontweight="bold", color=BLUE, fontsize=10)
     ax8.legend(fontsize=8); ax8.set_facecolor(LIGHT)
 
-    # 9 — Returnable vs Non-returnable
+    # 9 - Returnable vs Non-returnable
     ax9 = fig.add_subplot(3, 3, 9)
     rg = df.groupby("is_returnable")["final_price"].describe()[["mean", "25%", "75%"]]
     means = [rg.loc[False, "mean"], rg.loc[True, "mean"]]
@@ -220,14 +213,12 @@ def plot_dashboard(df: pd.DataFrame, results: dict, best: str, yte) -> None:
     print(f"[plot]  Dashboard saved → {path}")
 
 
-# ── 9. Save Model ─────────────────────────────────────────────────────────────
 def save_model(results: dict, best: str) -> None:
     path = os.path.join(OUTPUT_DIR, "best_model.pkl")
     joblib.dump(results[best]["pipe"], path)
     print(f"[save]  Model saved → {path}")
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     df              = load_data(DATA_PATH)
     df              = engineer_features(df)
