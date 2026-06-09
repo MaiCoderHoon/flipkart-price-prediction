@@ -30,7 +30,7 @@ Key columns: `price`, `discount_percent`, `final_price`, `rating`, `review_count
 ```
 flipkart-price-prediction/
 ├── assets/
-│   └── flipkart_products.csv       # Dataset (add manually)
+│   └── flipkard.csv       # Dataset (add manually)
 ├── src/
 │   └── pipeline.py                 # Full ML pipeline
 ├── outputs/
